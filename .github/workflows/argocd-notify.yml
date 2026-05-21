@@ -1,0 +1,60 @@
+name: ArgoCD Notification Consumer
+
+# Fired by ArgoCD's notifications controller via a `repository_dispatch` POST
+# to https://api.github.com/repos/<owner>/<repo>/dispatches with one of the
+# event_type values below in the JSON body. The Argo template's client_payload
+# carries app name, sync status, health, revision, and the config "path"
+# (inline vs manifest) so we can tell which method drove the event.
+#
+# NOTE: repository_dispatch only fires workflows on the repo's default branch.
+
+on:
+  repository_dispatch:
+    types:
+      - argocd-deployed
+      - argocd-sync-failed
+      - argocd-health-degraded
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show event metadata
+        run: |
+          echo "::group::Event"
+          echo "event_type: ${{ github.event.action }}"
+          echo "::endgroup::"
+
+      - name: Show client_payload
+        run: |
+          echo "::group::client_payload"
+          echo '${{ toJSON(github.event.client_payload) }}'
+          echo "::endgroup::"
+
+      - name: Human-friendly summary
+        env:
+          ACTION:   ${{ github.event.action }}
+          APP:      ${{ github.event.client_payload.app }}
+          STATUS:   ${{ github.event.client_payload.status }}
+          HEALTH:   ${{ github.event.client_payload.health }}
+          REVISION: ${{ github.event.client_payload.revision }}
+          PATH_:    ${{ github.event.client_payload.path }}
+          MESSAGE:  ${{ github.event.client_payload.message }}
+        run: |
+          case "$ACTION" in
+            argocd-deployed)
+              echo "✅ App '$APP' deployed (via $PATH_)"
+              echo "   sync=$STATUS health=$HEALTH revision=$REVISION"
+              ;;
+            argocd-sync-failed)
+              echo "❌ App '$APP' sync FAILED (via $PATH_)"
+              echo "   reason: $MESSAGE"
+              ;;
+            argocd-health-degraded)
+              echo "⚠️ App '$APP' is DEGRADED (via $PATH_)"
+              echo "   health=$HEALTH"
+              ;;
+            *)
+              echo "unknown event_type: $ACTION"
+              ;;
+          esac

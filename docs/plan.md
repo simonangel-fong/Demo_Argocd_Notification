@@ -94,17 +94,16 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Prove the inline notifications config delivers messages to Slack.
 
-- [ ] Add Slack subscription annotation to `argocd_app/application.yaml`:
+- [x] Add Slack subscription annotation to `argocd_app/application.yaml`:
   - `notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo`
   - `notifications.argoproj.io/subscribe.on-sync-failed.slack: project-gitops-demo`
   - `notifications.argoproj.io/subscribe.on-health-degraded.slack: project-gitops-demo`
-- [ ] `kubectl apply -f argocd_app/application.yaml`
-- [ ] Trigger an event:
-  - Deployed: bump image tag in `apps/deployment.yaml` (e.g. nginx:1.25 → 1.26), commit, push, sync
-  - Sync failed: temporarily point image to `nginx:nonexistent-tag`, commit, push, observe degraded notification, then revert
-- [ ] Confirm Slack messages arrived (✅ deployed, ⚠️ degraded)
-- [ ] Save screenshot to `docs/screenshots/inline-slack-deployed.png` (and one for failure)
-- [ ] If nothing arrives: check `kubectl logs -n argocd deploy/argocd-notifications-controller --tail=100` for delivery errors
+- [x] `kubectl apply -f argocd_app/application.yaml`
+- [x] Trigger a deploy event (image tag bump → commit → push → sync)
+- [x] Confirm Slack `on-deployed` message arrived in `#project-gitops-demo`
+- [ ] (Optional) Trigger a sync-failed event with a bad image tag and capture that screenshot too
+- [ ] Save screenshot to `docs/screenshots/inline-slack-deployed.png`
+- [x] Debug notes captured in [docs/debug_slack.md](debug_slack.md) — fold into `docs/tech.md` later
 
 ---
 
