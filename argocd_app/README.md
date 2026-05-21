@@ -26,4 +26,9 @@ kubectl get svc
 
 ```sh
 kubectl logs -n argocd deploy/argocd-notifications-controller --tail=100
+
+
+kubectl replace --force -f argocd_app/application.yaml
+# application.argoproj.io "sample-app" deleted from argocd namespace
+# application.argoproj.io/sample-app replaced
 ```
