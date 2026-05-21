@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sample-app
+  namespace: argocd
+  # Subscription annotations are added per slice. Leave empty to start.
+  # annotations:
+  #   notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo
+  #   notifications.argoproj.io/subscribe.on-sync-failed.slack: project-gitops-demo
+  #   notifications.argoproj.io/subscribe.on-health-degraded.slack: project-gitops-demo
+  #   notifications.argoproj.io/subscribe.on-deployed.github: ""
+  #   notifications.argoproj.io/subscribe.on-sync-failed.github: ""
+  #   notifications.argoproj.io/subscribe.on-health-degraded.github: ""
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/simonangel-fong/Demo_Argocd_Notification.git
+    targetRevision: master
+    path: apps
+    directory:
+      # Only include the workload manifests, not the Application CR itself.
+      include: '{deployment.yaml,service.yaml}'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sample-app
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
