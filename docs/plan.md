@@ -181,12 +181,12 @@ Uses [`helm/values-manifest.yaml`](../helm/values-manifest.yaml) — same base A
 
 **Goal:** Prove the manifest-configured notifications deliver to Slack.
 
-- [ ] Re-apply the sample app with the Slack subscription annotations:
-  - `notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo` (etc.)
-- [ ] `kubectl apply -f argocd_app/application.yaml`
-- [ ] Trigger deploy and failure events as in Step 4
-- [ ] Confirm Slack messages arrived with `[manifest]` prefix
-- [ ] Save screenshot to `docs/screenshots/manifest-slack-deployed.png`
+- [x] Re-apply the sample app with the Slack subscription annotations (carried over from Step 4/6)
+- [x] `kubectl apply -f argocd_app/application.yaml`
+- [x] Trigger deploy event (image bump → commit → push → sync)
+- [x] Confirmed Slack `[manifest]`-prefixed `on-deployed` message arrived in `#project-gitops-demo`
+- [ ] (Optional) Trigger a sync-failed event with a bad image tag and capture that screenshot too
+- [ ] Save screenshot to `docs/screenshots/manifest-slack-deployed.png` (do in Step 12)
 
 ---
 
@@ -194,11 +194,11 @@ Uses [`helm/values-manifest.yaml`](../helm/values-manifest.yaml) — same base A
 
 **Goal:** Prove the manifest-configured notifications deliver `repository_dispatch` events.
 
-- [ ] Add GitHub subscription annotations to `argocd_app/application.yaml` (alongside Slack)
-- [ ] `kubectl apply -f argocd_app/application.yaml`
-- [ ] Trigger a deploy event
-- [ ] Confirm GitHub Actions run fires — `path: "manifest"` should appear in the printed `client_payload`
-- [ ] Capture the run URL
+- [x] GitHub subscription annotations carried over from Step 6 — no edit needed
+- [x] `kubectl apply -f argocd_app/application.yaml` (done in Step 10)
+- [x] Trigger a deploy event (done in Step 10 — same sync triggers both targets)
+- [x] Confirmed GitHub Actions run fires with `path: "manifest"` in `client_payload`
+- [ ] Capture the run URL (do in Step 12)
 
 ---
 
