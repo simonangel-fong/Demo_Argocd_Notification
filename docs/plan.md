@@ -36,7 +36,7 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 - [x] `argocd` CLI installed (in WSL)
 - [x] Slack workspace + incoming webhook URL ready → `<SLACK_WEBHOOK_URL>`
 - [x] Slack channel chosen → `<SLACK_CHANNEL>` (e.g. `#argocd-demo`)
-- [x] GitHub fine-grained PAT created with **Contents: Read** and **Metadata: Read** for this repo → `<GITHUB_PAT>`
+- [x] GitHub fine-grained PAT created with **Contents: Read and write** and **Metadata: Read** for this repo → `<GITHUB_PAT>` (write is required for `repository_dispatch`)
 - [x] GitHub repo owner/name noted → `<GITHUB_OWNER>/<GITHUB_REPO>`
 
 ---
@@ -129,15 +129,15 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Prove the inline notifications config delivers `repository_dispatch` events to the workflow.
 
-- [ ] Add GitHub subscription annotation to `argocd_app/application.yaml` (alongside the Slack ones):
+- [x] Add GitHub subscription annotations to `argocd_app/application.yaml` (alongside the Slack ones):
   - `notifications.argoproj.io/subscribe.on-deployed.github: ""`
   - `notifications.argoproj.io/subscribe.on-sync-failed.github: ""`
   - `notifications.argoproj.io/subscribe.on-health-degraded.github: ""`
-- [ ] `kubectl apply -f argocd_app/application.yaml`
-- [ ] Trigger a deploy event (image tag bump, sync)
-- [ ] Confirm GitHub Actions run fires — `path: "inline"` should appear in the printed `client_payload`
-- [ ] Capture the run URL for the README
-- [ ] If nothing arrives: check controller logs for HTTP errors (401 = PAT issue, 404 = wrong repo, 422 = bad JSON body)
+- [x] `kubectl apply -f argocd_app/application.yaml`
+- [x] Trigger a deploy event (image tag bump → commit → push → sync)
+- [x] Confirm GitHub Actions run fires — `path: "inline"` in `client_payload`
+- [ ] Capture the run URL for the README (do in Step 12)
+- [x] Root cause of initial silent failure: PAT needed **Contents: Read and write**, not just Read. Step 0 prereq updated below.
 
 ---
 
@@ -145,11 +145,11 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Remove all inline-method state so the manifest method is proven entirely on its own.
 
-- [ ] Delete the sample app: `kubectl delete -f argocd_app/application.yaml`
-- [ ] Uninstall ArgoCD: `helm uninstall argocd -n argocd`
-- [ ] Delete the namespace (removes the notifications secret too): `kubectl delete ns argocd`
-- [ ] Revert `argocd_app/application.yaml` subscription annotations to placeholders (or remove them — manifest slice rewrites them anyway)
-- [ ] Verify clean: `kubectl get ns argocd` returns NotFound
+- [x] Delete the sample app: `kubectl delete -f argocd_app/application.yaml`
+- [x] Uninstall ArgoCD: `helm uninstall argocd -n argocd`
+- [x] Delete the namespace (removes the notifications secret too): `kubectl delete ns argocd`
+- [ ] Revert `argocd_app/application.yaml` subscription annotations to placeholders — deferred (Step 10 rewrites them anyway, leave for now)
+- [x] Verify clean: `kubectl get ns argocd` returns NotFound
 
 ---
 
