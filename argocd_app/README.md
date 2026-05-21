@@ -42,4 +42,8 @@ echo "Token starts with: ${TOKEN:0:10}..."
 
 # test
 curl -s -X POST https://slack.com/api/chat.postMessage   -H "Authorization: Bearer $TOKEN"   -H "Content-Type: application/json; charset=utf-8"   -d '{"channel":"project-gitops-demo","text":"direct curl test"}'
+
+# Strip dedup
+kubectl annotate app sample-app -n argocd notified.notifications.argoproj.io-
+# application.argoproj.io/sample-app annotated
 ```
