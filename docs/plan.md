@@ -111,17 +111,17 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** A workflow that fires on `repository_dispatch` and prints the payload. Needed before the GitHub-target slices can be tested.
 
-- [ ] Create `.github/workflows/argocd-notify.yml`
-- [ ] Trigger: `on: repository_dispatch: types: [argocd-deployed, argocd-sync-failed, argocd-health-degraded]`
-- [ ] Single job, steps: echo `${{ github.event.action }}`, echo `${{ toJSON(github.event.client_payload) }}`, print a friendly message per event type
-- [ ] Commit + push so the workflow is on the **default branch** (required for `repository_dispatch` to find it)
-- [ ] Manually test with `gh` or `curl` before wiring ArgoCD:
+- [x] Create `.github/workflows/argocd-notify.yml`
+- [x] Trigger: `on: repository_dispatch: types: [argocd-deployed, argocd-sync-failed, argocd-health-degraded]`
+- [x] Single job, steps: echo `${{ github.event.action }}`, echo `${{ toJSON(github.event.client_payload) }}`, print a friendly message per event type
+- [x] Commit + push so the workflow is on the **default branch**
+- [x] Manually test with `gh` (note: quote `client_payload[...]` args to avoid shell glob parsing):
   ```sh
   gh api repos/simonangel-fong/Demo_Argocd_Notification/dispatches \
     -f event_type=argocd-deployed \
-    -F client_payload[app]=manual-test -F client_payload[status]=Synced
+    -f 'client_payload[app]=manual-test' -f 'client_payload[status]=Synced'
   ```
-- [ ] Verify the workflow run appears under the repo's Actions tab
+- [x] Verified the workflow run appears under the repo's Actions tab
 
 ---
 

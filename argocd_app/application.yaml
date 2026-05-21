@@ -3,15 +3,16 @@ kind: Application
 metadata:
   name: sample-app
   namespace: argocd
-  # Step 4 — INLINE × Slack: Slack subscriptions active.
-  # GitHub subscriptions are added in Step 6.
+  # Step 6 — INLINE × Slack + GitHub Actions: both targets subscribed.
   annotations:
+    # slack
     notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo
     notifications.argoproj.io/subscribe.on-sync-failed.slack: project-gitops-demo
     notifications.argoproj.io/subscribe.on-health-degraded.slack: project-gitops-demo
-    # notifications.argoproj.io/subscribe.on-deployed.github: ""
-    # notifications.argoproj.io/subscribe.on-sync-failed.github: ""
-    # notifications.argoproj.io/subscribe.on-health-degraded.github: ""
+    # github actions
+    notifications.argoproj.io/subscribe.on-deployed.github: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.github: ""
+    notifications.argoproj.io/subscribe.on-health-degraded.github: ""
 spec:
   project: default
 
