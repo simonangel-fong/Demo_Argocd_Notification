@@ -21,3 +21,9 @@ kubectl get svc
 # test notification
 # update image: nginx:1.25 -> nginx:1.26; git push
 ```
+
+- debug
+
+```sh
+kubectl logs -n argocd deploy/argocd-notifications-controller --tail=100
+```

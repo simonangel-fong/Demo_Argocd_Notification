@@ -16,7 +16,7 @@ notifications:
   # notifier
   notifiers:
     service.slack: |
-      token: $slack-webhook
+      token: $slack-token
     # Webhook notifier targeting GitHub's repository_dispatch endpoint.
     service.webhook.github: |
       url: https://api.github.com/repos/simonangel-fong/Demo_Argocd_Notification/dispatches
