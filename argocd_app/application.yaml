@@ -3,14 +3,15 @@ kind: Application
 metadata:
   name: sample-app
   namespace: argocd
-  # Subscription annotations are added per slice. Leave empty to start.
-  # annotations:
-  #   notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo
-  #   notifications.argoproj.io/subscribe.on-sync-failed.slack: project-gitops-demo
-  #   notifications.argoproj.io/subscribe.on-health-degraded.slack: project-gitops-demo
-  #   notifications.argoproj.io/subscribe.on-deployed.github: ""
-  #   notifications.argoproj.io/subscribe.on-sync-failed.github: ""
-  #   notifications.argoproj.io/subscribe.on-health-degraded.github: ""
+  # Step 4 — INLINE × Slack: Slack subscriptions active.
+  # GitHub subscriptions are added in Step 6.
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: project-gitops-demo
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: project-gitops-demo
+    # notifications.argoproj.io/subscribe.on-deployed.github: ""
+    # notifications.argoproj.io/subscribe.on-sync-failed.github: ""
+    # notifications.argoproj.io/subscribe.on-health-degraded.github: ""
 spec:
   project: default
 
@@ -24,7 +25,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: sample-app
+    namespace: default
 
   syncPolicy:
     automated:

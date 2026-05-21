@@ -1,0 +1,20 @@
+
+```sh
+# Apply the Application
+kubectl apply -f argocd_app/application.yaml
+# application.argoproj.io/sample-app created
+
+kubectl get app -n argocd
+# NAME         SYNC STATUS   HEALTH STATUS
+# sample-app   Synced        Healthy
+
+kubectl get pods
+# NAME                         READY   STATUS    RESTARTS   AGE
+# sample-app-d46dc5456-tr4sq   1/1     Running   0          68s
+kubectl get svc
+
+kubectl get svc
+# NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+# kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP   71m
+# sample-app   ClusterIP   10.104.209.170   <none>        80/TCP    83s
+```

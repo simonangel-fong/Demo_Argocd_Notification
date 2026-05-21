@@ -80,13 +80,13 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** A minimal nginx workload + an ArgoCD `Application` CR. Same app reused for both methods; only the subscription annotations change between slices.
 
-- [ ] Create `sample-app/deployment.yaml` (nginx:1.25, 1 replica)
-- [ ] Create `sample-app/service.yaml` (ClusterIP)
-- [ ] Create `sample-app/application.yaml` — `Application` CR pointing at `sample-app/` in this repo (or `path: sample-app` with `repoURL: https://github.com/simonangel-fong/Demo_Argocd_Notification.git`)
-  - Leave subscription annotations as **placeholders / commented** initially — each slice fills them in
-- [ ] Commit + push so ArgoCD can pull from the repo
-- [ ] Apply: `kubectl apply -f sample-app/application.yaml`
-- [ ] Verify in ArgoCD UI: the app shows Synced + Healthy
+- [x] Create `apps/deployment.yaml` (nginx:1.25, 1 replica)
+- [x] Create `apps/service.yaml` (ClusterIP)
+- [x] Create `argocd_app/application.yaml` — `Application` CR pointing at `apps/` in this repo
+  - Subscription annotations left as commented placeholders — each slice fills them in
+- [x] Commit + push so ArgoCD can pull from the repo
+- [x] Apply: `kubectl apply -f argocd_app/application.yaml`
+- [x] Verify in ArgoCD UI: the app shows Synced + Healthy
 
 ---
 
@@ -94,13 +94,13 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Prove the inline notifications config delivers messages to Slack.
 
-- [ ] Add Slack subscription annotation to `sample-app/application.yaml`:
+- [ ] Add Slack subscription annotation to `argocd_app/application.yaml`:
   - `notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo`
   - `notifications.argoproj.io/subscribe.on-sync-failed.slack: project-gitops-demo`
   - `notifications.argoproj.io/subscribe.on-health-degraded.slack: project-gitops-demo`
-- [ ] `kubectl apply -f sample-app/application.yaml`
+- [ ] `kubectl apply -f argocd_app/application.yaml`
 - [ ] Trigger an event:
-  - Deployed: bump image tag in `sample-app/deployment.yaml` (e.g. nginx:1.25 → 1.26), commit, push, sync
+  - Deployed: bump image tag in `apps/deployment.yaml` (e.g. nginx:1.25 → 1.26), commit, push, sync
   - Sync failed: temporarily point image to `nginx:nonexistent-tag`, commit, push, observe degraded notification, then revert
 - [ ] Confirm Slack messages arrived (✅ deployed, ⚠️ degraded)
 - [ ] Save screenshot to `docs/screenshots/inline-slack-deployed.png` (and one for failure)
@@ -130,11 +130,11 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Prove the inline notifications config delivers `repository_dispatch` events to the workflow.
 
-- [ ] Add GitHub subscription annotation to `sample-app/application.yaml` (alongside the Slack ones):
+- [ ] Add GitHub subscription annotation to `argocd_app/application.yaml` (alongside the Slack ones):
   - `notifications.argoproj.io/subscribe.on-deployed.github: ""`
   - `notifications.argoproj.io/subscribe.on-sync-failed.github: ""`
   - `notifications.argoproj.io/subscribe.on-health-degraded.github: ""`
-- [ ] `kubectl apply -f sample-app/application.yaml`
+- [ ] `kubectl apply -f argocd_app/application.yaml`
 - [ ] Trigger a deploy event (image tag bump, sync)
 - [ ] Confirm GitHub Actions run fires — `path: "inline"` should appear in the printed `client_payload`
 - [ ] Capture the run URL for the README
@@ -146,10 +146,10 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Remove all inline-method state so the manifest method is proven entirely on its own.
 
-- [ ] Delete the sample app: `kubectl delete -f sample-app/application.yaml`
+- [ ] Delete the sample app: `kubectl delete -f argocd_app/application.yaml`
 - [ ] Uninstall ArgoCD: `helm uninstall argocd -n argocd`
 - [ ] Delete the namespace (removes the notifications secret too): `kubectl delete ns argocd`
-- [ ] Revert `sample-app/application.yaml` subscription annotations to placeholders (or remove them — manifest slice rewrites them anyway)
+- [ ] Revert `argocd_app/application.yaml` subscription annotations to placeholders (or remove them — manifest slice rewrites them anyway)
 - [ ] Verify clean: `kubectl get ns argocd` returns NotFound
 
 ---
@@ -184,7 +184,7 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 - [ ] Re-apply the sample app with the Slack subscription annotations:
   - `notifications.argoproj.io/subscribe.on-deployed.slack: project-gitops-demo` (etc.)
-- [ ] `kubectl apply -f sample-app/application.yaml`
+- [ ] `kubectl apply -f argocd_app/application.yaml`
 - [ ] Trigger deploy and failure events as in Step 4
 - [ ] Confirm Slack messages arrived with `[manifest]` prefix
 - [ ] Save screenshot to `docs/screenshots/manifest-slack-deployed.png`
@@ -195,8 +195,8 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Prove the manifest-configured notifications deliver `repository_dispatch` events.
 
-- [ ] Add GitHub subscription annotations to `sample-app/application.yaml` (alongside Slack)
-- [ ] `kubectl apply -f sample-app/application.yaml`
+- [ ] Add GitHub subscription annotations to `argocd_app/application.yaml` (alongside Slack)
+- [ ] `kubectl apply -f argocd_app/application.yaml`
 - [ ] Trigger a deploy event
 - [ ] Confirm GitHub Actions run fires — `path: "manifest"` should appear in the printed `client_payload`
 - [ ] Capture the run URL
@@ -249,10 +249,12 @@ notifications/
   configmap.yaml                 # MANIFEST notifications
   secret.yaml.template           # secret shape (real one gitignored)
   README.md                      # apply/verify command log
-sample-app/                      # reusable workload + Application CR
+apps/                            # reusable workload manifests
   deployment.yaml
   service.yaml
+argocd_app/                      # ArgoCD Application CR for the workload
   application.yaml
+  README.md                      # apply/verify command log
 docs/
   plan.md                        # this plan
   tech.md                        # troubleshooting & gotchas
