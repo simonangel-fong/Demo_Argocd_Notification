@@ -1,0 +1,96 @@
+# ConfigMap supplies notifiers, templates, and triggers for ArgoCD
+#   - Slack template messages are prefixed with [manifest]
+#   - GitHub webhook body sets client_payload.path = "manifest"
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+data:
+  # ---------- notifiers ----------
+  service.slack: |
+    token: $slack-token
+
+  service.webhook.github: |
+    url: https://api.github.com/repos/simonangel-fong/Demo_Argocd_Notification/dispatches
+    headers:
+    - name: Authorization
+      value: token $github-token
+    - name: Accept
+      value: application/vnd.github+json
+    - name: Content-Type
+      value: application/json
+
+  # ---------- templates ----------
+  template.app-deployed: |
+    message: |
+      :white_check_mark: [manifest] Application *{{.app.metadata.name}}* deployed.
+      Sync status: {{.app.status.sync.status}}
+      Health: {{.app.status.health.status}}
+      Revision: {{.app.status.operationState.syncResult.revision}}
+    webhook:
+      github:
+        method: POST
+        body: |
+          {
+            "event_type": "argocd-deployed",
+            "client_payload": {
+              "app": "{{.app.metadata.name}}",
+              "status": "{{.app.status.sync.status}}",
+              "health": "{{.app.status.health.status}}",
+              "revision": "{{.app.status.operationState.syncResult.revision}}",
+              "path": "manifest"
+            }
+          }
+
+  template.app-sync-failed: |
+    message: |
+      :x: [manifest] Application *{{.app.metadata.name}}* sync failed.
+      Reason: {{.app.status.operationState.message}}
+    webhook:
+      github:
+        method: POST
+        body: |
+          {
+            "event_type": "argocd-sync-failed",
+            "client_payload": {
+              "app": "{{.app.metadata.name}}",
+              "message": {{ .app.status.operationState.message | toJson }},
+              "path": "manifest"
+            }
+          }
+
+  template.app-health-degraded: |
+    message: |
+      :warning: [manifest] Application *{{.app.metadata.name}}* is degraded.
+      Health: {{.app.status.health.status}}
+    webhook:
+      github:
+        method: POST
+        body: |
+          {
+            "event_type": "argocd-health-degraded",
+            "client_payload": {
+              "app": "{{.app.metadata.name}}",
+              "health": "{{.app.status.health.status}}",
+              "path": "manifest"
+            }
+          }
+
+  # ---------- triggers ----------
+  trigger.on-deployed: |
+    - description: Application is synced and healthy.
+      send: [app-deployed]
+      when: app.status.operationState != nil and app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+      oncePer: app.status.operationState.syncResult.revision
+  trigger.on-sync-failed: |
+    - description: Application sync failed.
+      send: [app-sync-failed]
+      when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
+  trigger.on-health-degraded: |
+    - description: Application health degraded.
+      send: [app-health-degraded]
+      when: app.status.health.status == 'Degraded'

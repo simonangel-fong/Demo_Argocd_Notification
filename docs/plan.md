@@ -46,8 +46,8 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 **Goal:** Get ArgoCD running locally with the notifications controller enabled.
 
 - [x] Add Helm repo: `helm repo add argo https://argoproj.github.io/argo-helm && helm repo update`
-- [x] Flesh out [helm/values.yaml](../helm/values.yaml) with: `server.service.type: ClusterIP`, `configs.params."server.insecure": true`, `notifications.enabled: true`
-- [x] Install: `helm install argocd argo/argo-cd -n argocd --create-namespace -f helm/values.yaml`
+- [x] Flesh out [helm/values-inline.yaml](../helm/values-inline.yaml) with: `server.service.type: ClusterIP`, `configs.params."server.insecure": true`, `notifications.enabled: true`
+- [x] Install: `helm install argocd argo/argo-cd -n argocd --create-namespace -f helm/values-inline.yaml`
 - [x] Wait for pods: `kubectl get pods -n argocd -w`
 - [x] Port-forward: `kubectl port-forward svc/argocd-server -n argocd 8080:443`
 - [x] Retrieve admin password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d`
@@ -58,19 +58,19 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 ## Step 2 — Build the inline notifications path (Slack + GitHub)
 
-**Goal:** Configure both notification targets via the `notifications.*` block in [helm/values.yaml](../helm/values.yaml).
+**Goal:** Configure both notification targets via the `notifications.*` block in [helm/values-inline.yaml](../helm/values-inline.yaml).
 
-- [x] Create `notifications/secret.yaml.template` documenting the secret shape (real `secret.yaml` is gitignored). Secret keys: `slack-webhook`, `github-token`
+- [x] Create `notifications/secret.yaml.template` documenting the secret shape (real `secret.yaml` is gitignored). Secret keys: `slack-token` (bot token, NOT webhook URL), `github-token`
 - [x] Apply the real (gitignored) `argocd-notifications-secret` to the cluster
-- [x] In `values.yaml` `notifications.notifiers`, define:
-  - `service.slack` → references `$slack-webhook`
+- [x] In `values-inline.yaml` `notifications.notifiers`, define:
+  - `service.slack` → references `$slack-token`
   - `service.webhook.github` → URL `https://api.github.com/repos/<GITHUB_OWNER>/<GITHUB_REPO>/dispatches`, headers `Authorization: token $github-token`, `Accept: application/vnd.github+json`
 - [x] In `notifications.templates`, define `app-deployed`, `app-sync-failed`, `app-health-degraded`. Each has:
   - `slack:` block (channel-friendly message text)
-  - `webhook.github:` block (method `POST`, body `{"event_type":"argocd-deployed","client_payload":{"app":"{{.app.metadata.name}}","status":"{{.app.status.sync.status}}","revision":"{{.app.status.operationState.syncResult.revision}}"}}`)
+  - `webhook.github:` block (method `POST`, body `{"event_type":"argocd-deployed","client_payload":{"app":"{{.app.metadata.name}}","status":"{{.app.status.sync.status}}","revision":"{{.app.status.operationState.syncResult.revision}}","path":"inline"}}`)
   - Use `toJson` filter on any dynamic field that may contain quotes/newlines (e.g., error messages)
 - [x] In `notifications.triggers`, bind `on-deployed`, `on-sync-failed`, `on-health-degraded` to the templates
-- [x] Upgrade release: `helm upgrade argocd argo/argo-cd -n argocd -f helm/values.yaml`
+- [x] Upgrade release: `helm upgrade argocd argo/argo-cd -n argocd -f helm/values-inline.yaml`
 - [x] Verify: `kubectl get cm argocd-notifications-cm -n argocd -o yaml` shows the inline config
 - [x] Tail controller logs: `kubectl logs -n argocd deploy/argocd-notifications-controller -f`
 
@@ -157,12 +157,12 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Reinstall ArgoCD with notifications enabled but **no inline notifier/template/trigger config**. The manifest will supply everything.
 
-- [ ] Create `helm/values-base.yaml` (or temporarily comment out the `notifications.notifiers/templates/triggers` blocks in `helm/values.yaml`) — keep `notifications.enabled: true` only
-- [ ] Decide which: simpler is to keep one `helm/values.yaml` and just comment the inline blocks for this slice. Re-enable them later if you want the final committed state to demonstrate both. **Recommended:** keep `helm/values.yaml` with the inline blocks present and document via the README that you can install with `--set notifications.notifiers=null` (or similar) to demo the manifest path. For the actual run-through here, comment them out temporarily.
-- [ ] `helm install argocd argo/argo-cd -n argocd --create-namespace -f helm/values.yaml`
-- [ ] Re-apply the secret: `kubectl apply -f notifications/secret.yaml`
-- [ ] Verify the `argocd-notifications-cm` exists but has no `service.*` / `template.*` / `trigger.*` keys yet
-- [ ] Re-port-forward, re-login
+Uses [`helm/values-manifest.yaml`](../helm/values-manifest.yaml) — same base ArgoCD as `values-inline.yaml`, but no `notifiers/templates/triggers` blocks. Both values files are kept committed so the final repo demonstrates either method by filename.
+
+- [x] `helm install argocd argo/argo-cd -n argocd --create-namespace -f helm/values-manifest.yaml`
+- [x] Re-apply the secret: `kubectl apply -f notifications/secret.yaml`
+- [x] Verify the `argocd-notifications-cm` exists but has no `service.*` / `template.*` / `trigger.*` keys yet (before configmap.yaml apply)
+- [x] Re-port-forward, re-login
 
 ---
 
@@ -170,10 +170,10 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Configure notifiers, templates, triggers via standalone Kubernetes manifests applied with `kubectl`.
 
-- [ ] Create `notifications/configmap.yaml` — a complete `argocd-notifications-cm` ConfigMap with `service.slack`, `service.webhook.github`, all three templates, all three triggers. Use the **same names** as the inline path (`on-deployed`, `app-deployed`, etc.) — no `-v2` suffix needed because the inline path no longer exists in this slice
-- [ ] Prefix Slack template messages with `[manifest]` so screenshots are distinguishable from the inline slice
-- [ ] Apply: `kubectl apply -f notifications/configmap.yaml`
-- [ ] Restart controller + tail logs: `kubectl rollout restart deploy/argocd-notifications-controller -n argocd && kubectl logs -n argocd deploy/argocd-notifications-controller --tail=50`
+- [x] Create `notifications/configmap.yaml` — complete `argocd-notifications-cm` with `service.slack`, `service.webhook.github`, all three templates, all three triggers. Same names as the inline path (no `-v2` suffix); they never coexist
+- [x] Prefix Slack template messages with `[manifest]` and set `client_payload.path = "manifest"` so screenshots and Actions runs are distinguishable from the inline slice
+- [x] Apply: `kubectl apply -f notifications/configmap.yaml`
+- [x] Restart controller + tail logs — clean reload, no parse errors
 
 ---
 
@@ -206,7 +206,7 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 
 **Goal:** Leave the repo in a state a public viewer can read top-to-bottom. Both methods' artifacts are committed; the README explains how to choose between them.
 
-- [ ] Restore `helm/values.yaml` to its full state (inline notifications block present) — so the file demonstrates the inline method even when the cluster is currently running the manifest method
+- [ ] Confirm both `helm/values-inline.yaml` and `helm/values-manifest.yaml` are committed — repo demonstrates both methods by filename, no edit-and-restore needed
 - [ ] Sample app `application.yaml` ends up with the final subscription annotations chosen (recommend: leave it with the **manifest-method** annotations since that's the more configurable real-world pattern, and call this out in the README)
 - [ ] Write [docs/tech.md](tech.md) — troubleshooting (outline below)
 - [ ] Refine root [README.md](../README.md) — 2×2 matrix, screenshots, quickstart, repo layout, skills demonstrated
@@ -242,8 +242,9 @@ A demo + reusable tech reference: **ArgoCD Notifications wired up 2 ways to 2 ta
 .github/workflows/
   argocd-notify.yml              # repository_dispatch consumer
 helm/
-  values.yaml                    # ArgoCD + INLINE notifications
-  README.md                      # install command log
+  values-inline.yaml             # ArgoCD + INLINE notifications config
+  values-manifest.yaml           # ArgoCD only (notifications come from kubectl)
+  README.md                      # install command log + which file to use when
 notifications/
   configmap.yaml                 # MANIFEST notifications
   secret.yaml.template           # secret shape (real one gitignored)
