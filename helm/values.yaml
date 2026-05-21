@@ -90,12 +90,12 @@ notifications:
     trigger.on-deployed: |
       - description: Application is synced and healthy.
         send: [app-deployed]
-        when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+        when: app.status.operationState != nil and app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
         oncePer: app.status.operationState.syncResult.revision
     trigger.on-sync-failed: |
       - description: Application sync failed.
         send: [app-sync-failed]
-        when: app.status.operationState.phase in ['Error', 'Failed']
+        when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
     trigger.on-health-degraded: |
       - description: Application health degraded.
         send: [app-health-degraded]

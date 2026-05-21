@@ -4,7 +4,7 @@ helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 
 # Install ArgoCD
-helm install argocd argo/argo-cd \
+helm upgrade --install argocd argo/argo-cd \
   -n argocd \
   --create-namespace \
   -f helm/values.yaml
