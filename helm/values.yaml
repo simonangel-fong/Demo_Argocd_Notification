@@ -1,0 +1,14 @@
+global:
+  domain: argocd.local
+
+server:
+  service:
+    type: ClusterIP
+
+configs:
+  params:
+    server.insecure: true
+
+
+notifications:
+  enabled: true   # Enable the notifications controller.
