@@ -32,3 +32,14 @@ kubectl replace --force -f argocd_app/application.yaml
 # application.argoproj.io "sample-app" deleted from argocd namespace
 # application.argoproj.io/sample-app replaced
 ```
+
+- slack debug
+
+```sh
+# get token
+TOKEN=$(kubectl get secret argocd-notifications-secret -n argocd -o jsonpath='{.data.slack-token}' | base64 -d)
+echo "Token starts with: ${TOKEN:0:10}..."
+
+# test
+curl -s -X POST https://slack.com/api/chat.postMessage   -H "Authorization: Bearer $TOKEN"   -H "Content-Type: application/json; charset=utf-8"   -d '{"channel":"project-gitops-demo","text":"direct curl test"}'
+```
